@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pinecone import Pinecone
 from langchain_huggingface import HuggingFaceEmbeddings
 from huggingface_hub import InferenceClient
@@ -38,6 +39,7 @@ class RAGChatbot:
 
     def _huggingface_generate(self, prompt):
         try:
+            # This is a synchronous call, so we'll run it in a thread pool
             completion = self.client.chat.completions.create(
                 model="deepseek-ai/DeepSeek-V3-0324",
                 messages=[{"role": "user", "content": prompt}],
@@ -47,7 +49,8 @@ class RAGChatbot:
             print(f"Error calling Hugging Face API: {e}")
             return "I'm having trouble generating a response right now."
 
-    def rewrite_query(self, query, history):
+    async def rewrite_query_async(self, query, history):
+        loop = asyncio.get_running_loop()
         limited_history = history[-6:]
         formatted_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in limited_history])
         rewrite_prompt = f"""
@@ -63,7 +66,13 @@ class RAGChatbot:
 
         Standalone Query:
         """
-        return self._huggingface_generate(rewrite_prompt)
+        # Run the synchronous huggingface_generate in a separate thread
+        return await loop.run_in_executor(None, self._huggingface_generate, rewrite_prompt)
+
+    async def retrieve_context_async(self, query):
+        loop = asyncio.get_running_loop()
+        # Run the synchronous retrieve_context in a separate thread
+        return await loop.run_in_executor(None, self.retrieve_context, query)
 
     def generate_answer(self, query, context, history):
         prompt_template = f"""
@@ -88,19 +97,3 @@ class RAGChatbot:
 
     def _format_history(self, history):
         return "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-6:]])
-
-# This part is for local testing only and won't be used by the API.
-if __name__ == "__main__":
-    chatbot = RAGChatbot()
-    chat_history = []
-    print("\n--- RAG Chatbot is Ready! ---")
-    while True:
-        user_query = input("\nYou: ")
-        if user_query.lower() == 'exit':
-            break
-        standalone_query = chatbot.rewrite_query(user_query, chat_history)
-        retrieved_context = chatbot.retrieve_context(standalone_query)
-        final_answer = chatbot.generate_answer(user_query, retrieved_context, chat_history)
-        print(f"\nBot: {final_answer}")
-        chat_history.append({"role": "User", "content": user_query})
-        chat_history.append({"role": "Assistant", "content": final_answer})
