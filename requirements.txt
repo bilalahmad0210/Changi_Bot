@@ -6,3 +6,4 @@ pinecone
 langchain-huggingface
 huggingface_hub
 python-dotenv
+sentence-transformers
