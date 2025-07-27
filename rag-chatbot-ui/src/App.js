@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 
 // Constants
-const API_URL = "https://changi-bot.onrender.com/chat"; 
+const API_URL = "https://changi-bot.onrender.com/chat";
 const USER_ROLE = "User";
 const AI_ROLE = "AI";
 
@@ -36,7 +36,8 @@ const MessageBubble = ({ msg }) => {
 
     // Function to find URLs and make them clickable
     const createMarkup = () => {
-        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        // FIXED: Removed the unnecessary escape characters (\) before the forward slashes.
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])/ig;
         const linkifiedText = msg.content.replace(urlRegex, (url) => 
             `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #90cdf4; text-decoration: underline;">${url}</a>`
         );
