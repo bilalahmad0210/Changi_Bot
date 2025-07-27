@@ -34,14 +34,19 @@ const MessageBubble = ({ msg }) => {
         marginTop: '8px',
     };
 
-    // Function to find URLs and make them clickable
+    // Function to process text: makes URLs clickable and renders bold text from asterisks.
     const createMarkup = () => {
-        // FIXED: Removed the unnecessary escape characters (\) before the forward slashes.
         const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])/ig;
-        const linkifiedText = msg.content.replace(urlRegex, (url) => 
-            `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #90cdf4; text-decoration: underline;">${url}</a>`
-        );
-        return { __html: linkifiedText };
+        
+        let processedText = msg.content
+            // 1. Convert URLs to clickable links
+            .replace(urlRegex, (url) => 
+                `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #90cdf4; text-decoration: underline;">${url}</a>`
+            )
+            // 2. Convert **bold** markdown to <strong> HTML tags
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        return { __html: processedText };
     };
 
     return (
