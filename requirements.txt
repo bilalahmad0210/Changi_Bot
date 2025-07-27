@@ -2,7 +2,7 @@ tqdm
 fastapi
 uvicorn
 pydantic
-pinecone-client
+pinecone
 langchain-huggingface
 huggingface_hub
 python-dotenv
