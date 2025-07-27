@@ -1,13 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from typing import List, Dict
-# Import the specific functions you need, including the new initializer
-from rag_chatbot import (
-    initialize_clients, 
-    rewrite_query, 
-    retrieve_context, 
-    generate_answer
-)
+from rag_chatbot import RAGChatbot
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -18,10 +12,11 @@ app = FastAPI()
 @app.on_event("startup")
 async def startup_event():
     """
-    This function runs when the application starts.
-    It's the perfect place to initialize our AI clients.
+    On startup, create a single instance of the RAGChatbot and
+    store it in the application's state for shared access.
     """
-    initialize_clients()
+    app.state.chatbot = RAGChatbot()
+    print("Chatbot is ready.")
 
 # --- CORS Middleware ---
 # Remember to replace "*" with your actual frontend URL in production
@@ -43,15 +38,19 @@ class ChatResponse(BaseModel):
 
 # --- API Endpoints ---
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+def chat(request_data: ChatRequest, request: Request):
+    """
+    Handles the chat request by using the shared chatbot instance
+    from the application state.
+    """
+    chatbot = request.app.state.chatbot
     try:
-        standalone_query = rewrite_query(request.query, request.history)
-        context = retrieve_context(standalone_query)
-        answer = generate_answer(request.query, context, request.history)
+        standalone_query = chatbot.rewrite_query(request_data.query, request_data.history)
+        context = chatbot.retrieve_context(standalone_query)
+        answer = chatbot.generate_answer(request_data.query, context, request_data.history)
         return {"answer": answer}
     except Exception as e:
         print(f"An error occurred during chat processing: {e}")
-        # Return a user-friendly error message
         return JSONResponse(
             status_code=500,
             content={"message": "An internal error occurred. Please try again later."}
@@ -61,8 +60,3 @@ def chat(request: ChatRequest):
 def health_check():
     """A simple endpoint to check if the service is running."""
     return {"status": "OK"}
-
-@app.options("/chat")
-def options_chat():
-    """Handles CORS preflight requests."""
-    return JSONResponse(content={}, status_code=200)
