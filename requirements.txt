@@ -1,0 +1,8 @@
+tqdm
+fastapi
+uvicorn
+pydantic
+pinecone-client
+langchain-huggingface
+huggingface_hub
+python-dotenv
