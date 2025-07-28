@@ -139,9 +139,9 @@ npm start
 
 ## Screenshots
 
-| Chat Interface | Notification Popup |
+| Notification Popup | Chat Interface |
 |----------------|--------------------|
-| ![chat-ui](screenshots/chat_ui_dark.png) | ![popup](screenshots/popup_notification.png) |
+| ![popup](assets/popup.png) | ![chat-ui](assets/chat-ui.png) |
 
 ## Author
 
